@@ -267,6 +267,41 @@ canvas {
   display: none !important;
 }
 
+.footer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 40px auto 0;
+  padding: 20px 0;
+  text-align: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.footer-text {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.footer-contact {
+  margin: 8px 0 0;
+  font-size: 11px;
+}
+
+.footer-contact a {
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: color 0.25s ease;
+}
+
+.footer-contact a:hover,
+.footer-contact a:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 @media (max-width: 900px) {
   body {
     padding: 18px;

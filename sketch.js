@@ -13,9 +13,9 @@ const EMPTY_COLOR_INDEX = 0;
 let grid;
 // Color palette: index 0 is treated as "empty"
 const colorPalette = ["#000000",
-  "#ff0000", "#ff5100", "#3700ff", "#55ff00", 
-  "#00FF85", "#00F2FF", "#007BFF", "#ff00dd", 
-  "#00ae11", "#c14dff", "#4DFFC9", "#6600FF", 
+  "#ff0000", "#ff5100", "#3700ff", "#55ff00",
+  "#00FF85", "#00F2FF", "#007BFF", "#ff00dd",
+  "#00ae11", "#c14dff", "#4DFFC9", "#6600FF",
   "#ff2469", "#ff3374", "#fbff00", "#FFFFFF"
 ];
 let updateTimestamp = UPDATE_START_OFFSET_MS;
@@ -29,10 +29,10 @@ const EXPORT_CANVAS_WIDTH = 500;
 const EXPORT_CANVAS_HEIGHT = 600;
 const EXPORT_MARGIN = 50;
 const EXPORT_FRAME_PADDING = 5;
-const EXPORT_QR_SIZE = 80;
+const EXPORT_QR_SIZE = 105;
 const EXPORT_TITLE = "ART OF AUTONOMOUS PIXELS";
 const SHARE_SHORT_TEXT = "Autonomous pixels bloom into living patterns.";
-const SHARE_AUTHOR_LINE = "Created by @Enomi-4mg";
+const SHARE_AUTHOR_LINE = "Created by Enomi-4mg";
 const SHARE_X_ID = "@4mgEnomi";
 
 function setup() {
@@ -69,7 +69,7 @@ function mousePressed() {
 function restoreFromHash() {
   // Restore grid from URL hash when possible
   const hash = window.location.hash.substring(1);
-  if (hash.length === GRID_COLUMNS * GRID_ROWS) {
+  if (hash.length > 0) {
     grid.deserialize(hash);
   }
 }
@@ -87,13 +87,16 @@ function setupSaveButton() {
     correctLevel: QRCode.CorrectLevel.H
   });
   saveBtn.addEventListener('click', () => {
-    window.location.hash = grid.serialize();
+    const serializedData = grid.serialize();
+    window.location.hash = serializedData;
+    const baseUrl = window.location.href.split('#')[0];
+    const fullUrl = baseUrl + '#' + serializedData;
     // Generate the QR code
-    qrcode.makeCode(window.location.href);
+    qrcode.makeCode(fullUrl);
     // Wait briefly to ensure the library finishes rendering
     setTimeout(() => {
       exportImage();
-    }, 200);
+    }, 300);
   });
 }
 function setupPaletteButtons() {
@@ -331,48 +334,42 @@ function createInitialCells(columns, rows) {
   }
   return cells;
 }
-function exportImage() {
-  // Create a slightly larger "frame" canvas
+async function exportImage() {
   const exportCanvas = createGraphics(EXPORT_CANVAS_WIDTH, EXPORT_CANVAS_HEIGHT);
-  // Light background matching CSS theme
-  exportCanvas.background(246, 247, 251); // #f6f7fb
+  exportCanvas.background(246, 247, 251);
 
-  // Draw the frame border
+  // フレーム描画
   const frameSize = CANVAS_SIZE + EXPORT_FRAME_PADDING * 2;
-  exportCanvas.stroke(31, 41, 55); // #1f2937 - text color from CSS
+  exportCanvas.stroke(31, 41, 55);
   exportCanvas.strokeWeight(2);
   exportCanvas.noFill();
   exportCanvas.rect(EXPORT_MARGIN - EXPORT_FRAME_PADDING, EXPORT_MARGIN - EXPORT_FRAME_PADDING, frameSize, frameSize);
 
-  // Draw the grid onto the export canvas
+  // グリッド描画
   drawGridToGraphics(exportCanvas, EXPORT_MARGIN, EXPORT_MARGIN, CANVAS_SIZE);
 
-  const qrImgElement = document.querySelector('#qrcode img');
-  
-  const finalizeExport = () => {
-    exportCanvas.fill(31, 41, 55); // #1f2937 - text color from CSS
-    exportCanvas.textFont("Inter, Helvetica Neue, Segoe UI, sans-serif");
-    exportCanvas.textAlign(CENTER);
-    exportCanvas.textSize(18);
-    exportCanvas.textStyle(NORMAL);
-    exportCanvas.text(EXPORT_TITLE, EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 80);
-    exportCanvas.textSize(12);
-    exportCanvas.text("Created by @Enomi-4mg", EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 60);
-    // Save the composed image
-    saveCanvas(exportCanvas, 'my_artwork', 'png');
-  };
-
-  if (qrImgElement && qrImgElement.src !== "") {
-    // Load the QR image and draw it
-    loadImage(qrImgElement.src, (readyImg) => {
-      exportCanvas.image(readyImg, EXPORT_CANVAS_WIDTH - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING, EXPORT_CANVAS_HEIGHT - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING, EXPORT_QR_SIZE, EXPORT_QR_SIZE);
-      finalizeExport();
-    }, () => {
-      finalizeExport();
-    });
-  } else {
-    finalizeExport();
+  // QRコードの取得を待機
+  const qrImg = await getQRCodeImage();
+  if (qrImg) {
+    exportCanvas.image(
+      qrImg,
+      EXPORT_CANVAS_WIDTH - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING,
+      EXPORT_CANVAS_HEIGHT - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING,
+      EXPORT_QR_SIZE,
+      EXPORT_QR_SIZE
+    );
   }
+
+  // テキスト描画
+  exportCanvas.fill(31, 41, 55);
+  exportCanvas.textFont("Inter, Helvetica Neue, Segoe UI, sans-serif");
+  exportCanvas.textAlign(CENTER);
+  exportCanvas.textSize(18);
+  exportCanvas.text(EXPORT_TITLE, EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 80);
+  exportCanvas.textSize(12);
+  exportCanvas.text("Created by @Enomi-4mg", EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 60);
+
+  saveCanvas(exportCanvas, 'autonomous-pixels', 'png');
 }
 function drawGridToGraphics(gfx, offsetX, offsetY, size) {
   // Draw the current grid onto a p5.Graphics instance
@@ -450,19 +447,47 @@ class Grid {
     }
   }
   serialize() {
-    const data = this.cells.map(c => c.ColorIndex.toString(17)).join('');
-    // console.log("呪文:", data);
-    return data;
+    const data = this.cells.map(c => c.ColorIndex.toString(36)).join('');
+    return btoa(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
   deserialize(dataString) {
-    for (let i = 0; i < this.cells.length; i++) {
-      if (dataString[i]) {
-        this.cells[i].ColorIndex = parseInt(dataString[i], 17);
+    try {
+      let base64 = dataString.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4 !== 0) {
+        base64 += '=';
       }
+      const decodedData = atob(base64);
+      for (let i = 0; i < this.cells.length; i++) {
+        if (decodedData[i]) {
+          const val = parseInt(decodedData[i], 36);
+          if (!isNaN(val)) {
+            this.cells[i].ColorIndex = val % colorPalette.length;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("デコードに失敗しました:", e);
     }
   }
 }
+// QRコードの読み込みを待機するヘルパー
+function getQRCodeImage() {
+  return new Promise((resolve) => {
+    const checkInterval = setInterval(() => {
+      const qrImgElement = document.querySelector('#qrcode img');
+      if (qrImgElement && qrImgElement.src && qrImgElement.src.startsWith('data:image')) {
+        clearInterval(checkInterval);
+        loadImage(qrImgElement.src, (readyImg) => resolve(readyImg));
+      }
+    }, 50); // 50msごとにチェック
 
+    // 2秒経ってもダメならタイムアウト
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      resolve(null);
+    }, 2000);
+  });
+}
 function getDisplayColor(colorIndex) {
   if (!activePalette || !activePalette[colorIndex]) {
     return colorPalette[colorIndex];

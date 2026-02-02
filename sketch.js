@@ -30,6 +30,8 @@ const EXPORT_CANVAS_HEIGHT = 600;
 const EXPORT_MARGIN = 50;
 const EXPORT_FRAME_PADDING = 5;
 const EXPORT_QR_SIZE = 105;
+const EXPORT_QR_ONLY_SIZE = 800;
+const EXPORT_QR_ONLY_FRAME_PADDING = 20;
 const EXPORT_TITLE = "ART OF AUTONOMOUS PIXELS";
 const SHARE_SHORT_TEXT = "Autonomous pixels bloom into living patterns.";
 const SHARE_AUTHOR_LINE = "Created by Enomi-4mg";
@@ -47,6 +49,7 @@ function setup() {
   setupResetButton();
   restoreFromHash();
   setupSaveButton();
+  setupQRButton();
   setupShareButtons();
 }
 function draw() {
@@ -84,7 +87,7 @@ function setupSaveButton() {
     height: EXPORT_QR_SIZE,
     colorDark: "#000000",
     colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H
+    correctLevel: QRCode.CorrectLevel.Q
   });
   saveBtn.addEventListener('click', () => {
     const serializedData = grid.serialize();
@@ -96,6 +99,61 @@ function setupSaveButton() {
     // Wait briefly to ensure the library finishes rendering
     setTimeout(() => {
       exportImage();
+    }, 300);
+  });
+}
+function setupQRButton() {
+  const qrBtn = document.getElementById('save-qr-button');
+  if (!qrBtn) return;
+  qrBtn.disabled = false;
+  qrBtn.addEventListener('click', () => {
+    const serializedData = grid.serialize();
+    window.location.hash = serializedData;
+    const baseUrl = window.location.href.split('#')[0];
+    const fullUrl = baseUrl + '#' + serializedData;
+    // Generate the QR code
+    qrcode.makeCode(fullUrl);
+    // Wait briefly to ensure the library finishes rendering
+    setTimeout(() => {
+      const qrImgElement = document.querySelector('#qrcode img');
+      if (qrImgElement && qrImgElement.src) {
+        loadImage(qrImgElement.src, (readyImg) => {
+          const qrCanvas = createGraphics(EXPORT_QR_ONLY_SIZE, EXPORT_QR_ONLY_SIZE);
+          qrCanvas.background(246, 247, 251);
+
+          // Add frame around QR code
+          const qrSize = EXPORT_QR_ONLY_SIZE - 2 * EXPORT_QR_ONLY_FRAME_PADDING - 150;
+          const qrX = (EXPORT_QR_ONLY_SIZE - qrSize) / 2;
+          const qrY = 100;
+
+          // Draw QR code
+          qrCanvas.image(readyImg, qrX, qrY, qrSize, qrSize);
+
+          // Add title at top
+          qrCanvas.fill(31, 41, 55);
+          qrCanvas.textFont("Inter, Helvetica Neue, Segoe UI, sans-serif");
+          qrCanvas.textAlign(CENTER);
+          qrCanvas.textSize(32);
+          qrCanvas.textStyle(BOLD);
+          qrCanvas.text(EXPORT_TITLE, EXPORT_QR_ONLY_SIZE / 2, 60);
+
+          // Add description below QR
+          qrCanvas.textSize(20);
+          qrCanvas.textStyle(NORMAL);
+          qrCanvas.text(SHARE_SHORT_TEXT, EXPORT_QR_ONLY_SIZE / 2, qrY + qrSize + 40);
+
+          // Add author info
+          qrCanvas.textSize(18);
+          qrCanvas.text(SHARE_AUTHOR_LINE, EXPORT_QR_ONLY_SIZE / 2, qrY + qrSize + 70);
+
+          // Add URL at bottom
+          qrCanvas.textSize(16);
+          qrCanvas.fill(100, 116, 139);
+          qrCanvas.text("Scan to view this pattern", EXPORT_QR_ONLY_SIZE / 2, qrY + qrSize + 100);
+
+          saveCanvas(qrCanvas, 'autonomous-pixels-qr', 'png');
+        });
+      }
     }, 300);
   });
 }

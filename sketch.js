@@ -13,10 +13,10 @@ const EMPTY_COLOR_INDEX = 0;
 let grid;
 // Color palette: index 0 is treated as "empty"
 const colorPalette = ["#000000",
-  "#FF007F", "#FF5E00", "#FFE600", "#A3FF00", 
-  "#00FF85", "#00F2FF", "#007BFF", "#7A00FF", 
-  "#00ff04", "#FF4D4D", "#4DFFC9", "#6600FF", 
-  "#00A8A8", "#ff3374", "#fbff00", "#FFFFFF"
+  "#ff0000", "#ff5100", "#3700ff", "#55ff00", 
+  "#00FF85", "#00F2FF", "#007BFF", "#ff00dd", 
+  "#00ae11", "#c14dff", "#4DFFC9", "#6600FF", 
+  "#ff2469", "#ff3374", "#fbff00", "#FFFFFF"
 ];
 let updateTimestamp = UPDATE_START_OFFSET_MS;
 let qrcode;

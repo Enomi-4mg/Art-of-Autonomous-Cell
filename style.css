@@ -81,6 +81,14 @@ canvas {
   font-weight: 400;
 }
 
+.instruction-text {
+  margin: 0 0 20px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--accent);
+  font-weight: 400;
+}
+
 .core {
   display: flex;
   flex-direction: column;

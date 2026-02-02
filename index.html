@@ -1,20 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Sketch</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" type="text/css" href="style.css">
+  <title>Sketch</title>
 
-    <script src="libraries/p5.min.js"></script>
-    <script src="libraries/p5.sound.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  </head>
+  <link rel="stylesheet" type="text/css" href="style.css">
 
-  <body>
-    <script src="sketch.js"></script>
-    <div id="qrcode" style="display:none"></div>
-  </body>
+  <script src="libraries/p5.min.js"></script>
+  <script src="libraries/p5.sound.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1 class="title">ART OF AUTONOMOUS PIXELS</h1>
+  </header>
+  <main id="app" class="layout">
+    <aside class="panel panel-left">
+      <h2 class="panel-title">Palette Sets</h2>
+      <div id="palette-buttons" class="palette-buttons"></div>
+    </aside>
+
+    <section class="core">
+      <div id="canvas-shell" class="canvas-shell">
+        <div id="canvas-container" class="canvas-container"></div>
+      </div>
+    </section>
+
+    <aside class="panel panel-right">
+      <h2 class="panel-title">System</h2>
+      <button id="reset-button" class="reset-button">Reset</button>
+      <button id="save-button" class="save-button">Save Image</button>
+    </aside>
+  </main>
+
+  <div id="qrcode" class="hidden-ui"></div>
+  <script src="sketch.js"></script>
+</body>
+
 </html>

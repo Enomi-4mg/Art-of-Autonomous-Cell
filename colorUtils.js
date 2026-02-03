@@ -92,7 +92,7 @@ function toMonochrome(hex) {
 }
 
 function soften(hex, factor) {
-    const { r, g, b } = hexToRgb(hex);
-    const mix = (val) => Math.round(val + (255 - val) * factor * 0.6);
-    return rgbToHex(mix(r), mix(g), mix(b));
+  const { r, g, b } = hexToRgb(hex);
+  const mix = (val) => Math.round(val + (255 - val) * factor * 0.6);
+  return rgbToHex(mix(r), mix(g), mix(b));
 }

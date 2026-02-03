@@ -14,22 +14,22 @@ function buildPaletteSets() {
         {
             id: 'glacier',
             label: 'Glacier',
-            colors: colorPalette.map((hex) => shiftHue(hex, 170, 0.88, 1.05))
+            colors: colorPalette.map((hex, idx) => idx === 0 ? hex : shiftHue(hex, 170, 0.88, 1.05))
         },
         {
             id: 'ember',
             label: 'Ember',
-            colors: colorPalette.map((hex) => shiftHue(hex, -20, 1.08, 1.02))
+            colors: colorPalette.map((hex, idx) => idx === 0 ? hex : shiftHue(hex, -20, 1.08, 1.02))
         },
         {
             id: 'mono',
             label: 'Mono',
-            colors: colorPalette.map((hex) => toMonochrome(hex))
+            colors: colorPalette.map((hex, idx) => idx === 0 ? hex : toMonochrome(hex))
         },
         {
             id: 'pastel',
             label: 'Pastel',
-            colors: colorPalette.map((hex) => soften(hex, 0.65))
+            colors: colorPalette.map((hex, idx) => idx === 0 ? hex : soften(hex, 0.65))
         }
     ];
 }

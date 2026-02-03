@@ -244,6 +244,9 @@ class Grid {
                     cellIdx++;
                 }
             }
+
+            // デシリアライズ後に空セルリストを再構築して整合性を保つ
+            this.initializeEmptyList();
         } catch (e) {
             console.error("3bit復元失敗:", e);
         }

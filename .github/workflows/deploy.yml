@@ -23,5 +23,5 @@ jobs:
               env:
                   BUTLER_API_KEY: ${{ secrets.ITCH_TO_API_KEY }}
               run: |
-                  ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:windows-64 --userversion ${{ github.ref_name }}
-                  ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:web --userversion ${{ github.ref_name }}
+                ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:windows-64 --userversion ${{ github.ref_name }}
+                ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:web --userversion ${{ github.ref_name }}

@@ -2,17 +2,15 @@
 const CANVAS_SIZE = 400;
 let GRID_COLUMNS = 12;
 let GRID_ROWS = 12;
-
 // Simulation update timing
 const UPDATE_STEP_MS = 200;
 const UPDATE_START_OFFSET_MS = 800;
 // Dynamic interval scaling: base milliseconds × max cells / current empty cells
 const UPDATE_INTERVAL_CONSTANT = 200 * 144; // Base × typical grid size
-
 // Semantic indices
 const EMPTY_COLOR_INDEX = 0;
-const MUTATION_RATE = 0.05;
-
+const MUTATION_RATE = 0.33; // 33% mutation chance
+// Global variables
 let grid;
 // Color palette: index 0 is treated as "empty"
 const colorPalette = [
@@ -54,7 +52,7 @@ function setup() {
 }
 function draw() {
   background(0);
-  
+
   // Decay glow values for all cells
   for (let cell of grid.cells) {
     if (cell.glowValue > 0) {
@@ -64,18 +62,18 @@ function draw() {
       }
     }
   }
-  
+
   // Render current state
   grid.drawCells();
-  
+
   // Calculate dynamic interval based on empty cell count
   // Inverse relationship: fewer empty cells = longer interval (slower growth)
   const emptyCount = grid.emptyIndices.length;
   const minEmptyThreshold = 1;
-  const dynamicInterval = emptyCount > minEmptyThreshold 
-    ? UPDATE_INTERVAL_CONSTANT / emptyCount 
+  const dynamicInterval = emptyCount > minEmptyThreshold
+    ? UPDATE_INTERVAL_CONSTANT / emptyCount
     : UPDATE_INTERVAL_CONSTANT / minEmptyThreshold;
-  
+
   // Run fixed-step updates to keep time consistent
   while (millis() - updateTimestamp > dynamicInterval) {
     updateTimestamp += dynamicInterval;
@@ -134,23 +132,33 @@ function createInitialCells(columns, rows) {
   for (let i = 0; i < cellCount; i++) {
     cells.push(new Cell(true)); // All cells start empty
   }
-  
+
   // Add seed cells in the center region
-  const centerX = Math.floor(columns / 2);
-  const centerY = Math.floor(rows / 2);
-  const seedRadius = Math.max(1, Math.floor(Math.min(columns, rows) / 6));
-  
-  for (let dx = -seedRadius; dx <= seedRadius; dx++) {
-    for (let dy = -seedRadius; dy <= seedRadius; dy++) {
-      const x = centerX + dx;
-      const y = centerY + dy;
+  // Adjust seed size based on grid parity (even/odd)
+  const isEvenColumns = columns % 2 === 0;
+  const isEvenRows = rows % 2 === 0;
+
+  // Calculate seed size - make it even for even grids, odd for odd grids
+  const baseSeedSize = Math.max(2, Math.floor(Math.min(columns, rows) / 5));
+  const seedSize = (isEvenColumns && isEvenRows)
+    ? (baseSeedSize % 2 === 0 ? baseSeedSize : baseSeedSize + 1)  // Even size for even grids
+    : (baseSeedSize % 2 === 1 ? baseSeedSize : baseSeedSize + 1); // Odd size for odd grids
+
+  // Calculate centered position
+  const startX = Math.floor((columns - seedSize) / 2);
+  const startY = Math.floor((rows - seedSize) / 2);
+
+  for (let dx = 0; dx < seedSize; dx++) {
+    for (let dy = 0; dy < seedSize; dy++) {
+      const x = startX + dx;
+      const y = startY + dy;
       if (x >= 0 && x < columns && y >= 0 && y < rows) {
         const idx = x + y * columns;
         cells[idx] = new Cell(false); // Non-empty seed cells
       }
     }
   }
-  
+
   return cells;
 }
 
@@ -159,11 +167,11 @@ function loadPreset(jsonData) {
   if (window.location.hash.length > 1) {
     return;
   }
-  
+
   try {
     // Accept both string and array formats
     let colorIndices = [];
-    
+
     if (typeof jsonData === 'string') {
       // Try to deserialize string format (serialized grid)
       grid.deserialize(jsonData);
@@ -175,7 +183,7 @@ function loadPreset(jsonData) {
       // Handle object with 'indices' property: { indices: [...] }
       colorIndices = jsonData.indices;
     }
-    
+
     // Apply color indices to grid
     if (colorIndices.length > 0) {
       const cellCount = Math.min(colorIndices.length, grid.cells.length);

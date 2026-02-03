@@ -14,8 +14,7 @@ jobs:
 
             - name: Install Butler
               run: |
-                  curl -L -o butler.zip https://broth.itch.io/butler/linux-amd64/LATEST/archive/default
-                  unzip butler.zip
+                  curl -L -o butler https://broth.itch.io/butler/linux-amd64/LATEST/archive/default
                   chmod +x butler
                   ./butler -V
 

@@ -14,9 +14,8 @@ jobs:
 
             - name: Install Butler
               run: |
-                  curl -L -o butler.tar.gz https://curl -L -o butler.tar.gz https://dl.itch.ovh/butler/linux-amd64/LATEST/archive/default
-                  tar -xzf butler.tar.gz/butler/linux-amd64/LATEST/archive/default
-                  tar -xzf butler.tar.gz
+                  curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+                  unzip butler.zip
                   chmod +x butler
                   ./butler -V
 
@@ -24,4 +23,5 @@ jobs:
               env:
                   ITCH_USERNAME: ${{ secrets.ITCH_TO_API_KEY }}
               run: |
+                  ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:windows-64 --target v${{ github.ref_name }}
                   ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:web --target v${{ github.ref_name }}

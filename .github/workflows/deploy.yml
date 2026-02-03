@@ -21,7 +21,7 @@ jobs:
 
             - name: Push to itch.io
               env:
-                  ITCH_USERNAME: ${{ secrets.ITCH_TO_API_KEY }}
+                  BUTLER_API_KEY: ${{ secrets.ITCH_TO_API_KEY }}
               run: |
                   ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:windows-64 --target v${{ github.ref_name }}
                   ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:web --target v${{ github.ref_name }}

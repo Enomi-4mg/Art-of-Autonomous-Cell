@@ -1,0 +1,25 @@
+name: Deploy to itch.io
+
+on:
+  push:
+    tags:
+      - 'v*' # v1.0.0 のように "v" から始まるタグがプッシュされた時に発火
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          mkdir -p ~/.config/itch
+          echo "${{ secrets.ITCH_IO_API_KEY }}" > ~/.config/itch/api_key
+
+      - name: Push to itch.io
+        run: |
+          ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:web --target v${{ github.ref_name }}

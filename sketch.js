@@ -1,10 +1,10 @@
 // Canvas and grid configuration
 const CANVAS_SIZE = 400;
-const GRID_COLUMNS = 10;
-const GRID_ROWS = 10;
+let GRID_COLUMNS = 12;
+let GRID_ROWS = 12;
 
 // Simulation update timing
-const UPDATE_STEP_MS = 100;
+const UPDATE_STEP_MS = 50;
 const UPDATE_START_OFFSET_MS = 800;
 
 // Semantic indices
@@ -12,11 +12,9 @@ const EMPTY_COLOR_INDEX = 0;
 
 let grid;
 // Color palette: index 0 is treated as "empty"
-const colorPalette = ["#000000",
-  "#ff0000", "#ff5100", "#3700ff", "#55ff00",
-  "#00FF85", "#00F2FF", "#007BFF", "#ff00dd",
-  "#00ae11", "#c14dff", "#4DFFC9", "#6600FF",
-  "#ff2469", "#ff3374", "#fbff00", "#FFFFFF"
+const colorPalette = [
+  "#FFFFFF", "#ff0000", "#ff5100", "#1100ff",
+  "#00F2FF", "#00ae11", "#9900ff", "#fbff00",
 ];
 let updateTimestamp = UPDATE_START_OFFSET_MS;
 let qrcode;
@@ -51,6 +49,7 @@ function setup() {
   setupSaveButton();
   setupQRButton();
   setupShareButtons();
+  setupSizeButtons();
 }
 function draw() {
   background(0);
@@ -64,9 +63,26 @@ function draw() {
 }
 function mousePressed() {
   // Clear the clicked cell (set to empty)
-  const index = grid.getIndexAt(mouseX, mouseY);
+  // console.log("Mouse pressed at " + mouseX + ", " + mouseY);
+  if (touches.length === 0) {
+    handleInput(mouseX, mouseY);
+  }
+}
+function touchStarted() {
+  const touchX = touches[0].x;
+  const touchY = touches[0].y;
+  if (touchX >= 0 && touchX <= width && touchY >= 0 && touchY <= height) {
+    // console.log("Touch started inside canvas at " + touchX + ", " + touchY);
+    handleInput(touchX, touchY);
+    return false;
+  }
+}
+function handleInput(x, y) {
+  const index = grid.getIndexAt(x, y);
+  // console.log(`Clicked at (${x}, ${y}), cell index: ${index}`);
   if (index !== null) {
     grid.cells[index].ColorIndex = EMPTY_COLOR_INDEX;
+    // console.log(`Cleared cell at index ${index}`);
   }
 }
 function restoreFromHash() {
@@ -90,6 +106,9 @@ function setupSaveButton() {
     correctLevel: QRCode.CorrectLevel.Q
   });
   saveBtn.addEventListener('click', () => {
+    if (GRID_COLUMNS > 16) {
+      alert("Warning: High density grid may be hard to scan via QR.");
+    }
     const serializedData = grid.serialize();
     window.location.hash = serializedData;
     const baseUrl = window.location.href.split('#')[0];
@@ -225,6 +244,29 @@ async function handleShareAction(type) {
     const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
     openShareWindow(lineUrl);
   }
+}
+function setupSizeButtons() {
+  const buttons = document.querySelectorAll('.size-btn');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // アクティブ状態の切り替え
+      buttons.forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      const newSize = parseInt(btn.dataset.size);
+
+      // グリッドのリセット
+      GRID_COLUMNS = newSize;
+      GRID_ROWS = newSize;
+      const cells = createInitialCells(GRID_COLUMNS, GRID_ROWS);
+      grid = new Grid(GRID_COLUMNS, GRID_ROWS, cells);
+
+      // 状態のクリア
+      window.location.hash = '';
+      console.log(`Grid resized to ${newSize}x${newSize}`);
+    });
+  });
 }
 function updateShareUrl() {
   window.location.hash = grid.serialize();
@@ -453,12 +495,21 @@ class Grid {
     for (let i = 0; i < this.X; i++) {
       for (let j = 0; j < this.Y; j++) {
         let index = i + j * this.X;
+        stroke(50);
+        strokeWeight(0.5);
         fill(getDisplayColor(this.cells[index].ColorIndex));
         rect(i * cellSize, j * cellSize, cellSize, cellSize);
       }
     }
   }
   getIndexAt(screenX, screenY) {
+    // キャンバスの実際の表示サイズを取得
+    const canvasElement = document.querySelector('#canvas-container canvas');
+    const rect = canvasElement.getBoundingClientRect();
+
+    // 表示サイズに対する相対座標を計算
+    const relativeX = screenX - 0; // すでに相対座標なら 0
+    const relativeY = screenY - 0;
     // Convert screen position to cell index (or null if outside)
     if (screenX < 0 || screenX >= width || screenY < 0 || screenY >= height) {
       return null;
@@ -504,27 +555,66 @@ class Grid {
       }
     }
   }
+  // 8色(3bit)最適化シリアライズ
   serialize() {
-    const data = this.cells.map(c => c.ColorIndex.toString(36)).join('');
-    return btoa(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    // ヘッダー: X, Y, パレット数(現在は8固定)
+    let bytes = [this.X, this.Y];
+
+    // 8色に制限するため、ColorIndexを 0-7 にクランプ
+    // 1バイトに2セル(3bit+3bit = 6bit)詰め込む
+    for (let i = 0; i < this.cells.length; i += 2) {
+      let c1 = this.cells[i].ColorIndex & 0x07;
+      let c2 = (this.cells[i + 1] ? this.cells[i + 1].ColorIndex : 0) & 0x07;
+
+      // [空き2bit][セル2の3bit][セル1の3bit]
+      bytes.push((c2 << 3) | c1);
+    }
+
+    let binary = "";
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
+
+  // 8色(3bit)デシリアライズ
   deserialize(dataString) {
     try {
       let base64 = dataString.replace(/-/g, '+').replace(/_/g, '/');
-      while (base64.length % 4 !== 0) {
-        base64 += '=';
+      while (base64.length % 4 !== 0) base64 += '=';
+      const decoded = atob(base64);
+
+      const newX = decoded.charCodeAt(0);
+      const newY = decoded.charCodeAt(1);
+
+      if (newX !== this.X || newY !== this.Y) {
+        this.X = newX;
+        this.Y = newY;
+        GRID_COLUMNS = newX;
+        GRID_ROWS = newY;
+        this.cells = createInitialCells(this.X, this.Y);
+
+        const buttons = document.querySelectorAll('.size-btn');
+        buttons.forEach(btn => {
+          btn.classList.toggle('is-active', parseInt(btn.dataset.size) === this.X);
+        });
       }
-      const decodedData = atob(base64);
-      for (let i = 0; i < this.cells.length; i++) {
-        if (decodedData[i]) {
-          const val = parseInt(decodedData[i], 36);
-          if (!isNaN(val)) {
-            this.cells[i].ColorIndex = val % colorPalette.length;
-          }
+
+      let cellIdx = 0;
+      for (let i = 2; i < decoded.length; i++) {
+        let byte = decoded.charCodeAt(i);
+
+        // セル1 (下位3bit)
+        if (cellIdx < this.cells.length) {
+          this.cells[cellIdx].ColorIndex = byte & 0x07;
+          cellIdx++;
+        }
+        // セル2 (次の3bit)
+        if (cellIdx < this.cells.length) {
+          this.cells[cellIdx].ColorIndex = (byte >> 3) & 0x07;
+          cellIdx++;
         }
       }
     } catch (e) {
-      console.error("デコードに失敗しました:", e);
+      console.error("3bit復元失敗:", e);
     }
   }
 }

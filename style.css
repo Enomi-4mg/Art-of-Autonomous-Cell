@@ -51,7 +51,7 @@ header h1 {
 canvas {
   display: block;
   width: 100% !important;
-  height: 100% !important;
+  height: 100% !important;/
 }
 
 .layout {
@@ -104,6 +104,66 @@ canvas {
   font-weight: 300;
   color: var(--accent);
   text-align: center;
+}
+
+.canvas-controls {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.size-presets {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-right: 4px;
+}
+
+.size-btn {
+  background: var(--button-bg);
+  border: var(--border-thin);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text);
+}
+
+.size-btn:hover {
+  background: var(--button-hover);
+}
+
+.size-btn.is-active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.reset-button-top {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #FF0040;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+}
+
+.reset-button-top:hover {
+  opacity: 0.8;
 }
 
 .canvas-shell {
@@ -202,6 +262,29 @@ canvas {
 .save-button:focus-visible {
   background: var(--button-hover);
   background-color: #ff004075;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+.save-qr-button{
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 20px;
+  border: var(--border-thin);
+  background: var(--button-bg);
+  background-color: #007BFF;
+  color: var(--text);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  backdrop-filter: blur(10px);
+}
+.save-qr-button:hover,
+.save-qr-button:focus-visible {
+  background: var(--button-hover);
+  background-color: #007BFF75;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
   transform: translateY(-1px);
 }

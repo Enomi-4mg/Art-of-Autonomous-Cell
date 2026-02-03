@@ -21,28 +21,57 @@
   <main id="app" class="layout">
     <aside class="panel panel-left">
       <h2 class="panel-title">Instructions</h2>
-      <p class="instruction-text">Click cells to clear them. Pixels grow automatically and inherit colors from neighbors.</p>
+      <p class="instruction-text">Click cells to clear them. Pixels grow automatically and inherit colors from
+        neighbors.</p>
       <h2 class="panel-title">Palette Sets</h2>
       <div id="palette-buttons" class="palette-buttons"></div>
     </aside>
 
     <section class="core">
+      <div class="canvas-controls">
+        <div class="size-presets">
+          <span class="control-label">GRID SIZE:</span>
+          <button class="size-btn" data-size="8">8</button>
+          <button class="size-btn is-active" data-size="12">12</button>
+          <button class="size-btn" data-size="16">16</button>
+          <button class="size-btn" data-size="32">32</button>
+        </div>
+        <button id="reset-button" class="reset-button-top">Reset</button>
+      </div>
       <div id="canvas-shell" class="canvas-shell">
         <div id="canvas-container" class="canvas-container"></div>
       </div>
+      <!-- <div id="debug-log"
+        style="position:fixed; bottom:0; left:0; width:100%; height:100px; background:rgba(0,0,0,0.8); color:white; font-size:10px; overflow-y:scroll; z-index:9999; pointer-events:none;">
+      </div>
+
+      <script>
+        // console.logの内容を画面に表示させる
+        (function () {
+          const logDiv = document.getElementById('debug-log');
+          const oldLog = console.log;
+          console.log = function (message) {
+            const entry = document.createElement('div');
+            entry.innerText = message;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            oldLog.apply(console, arguments);
+          };
+        })();
+      </script> -->
     </section>
 
     <aside class="panel panel-right">
       <h2 class="panel-title">System</h2>
-      <button id="reset-button" class="reset-button">Reset</button>
       <button id="save-button" class="save-button">Save Image</button>
-      <button id="save-qr-button" class="save-button">Save QR Image</button>
+      <button id="save-qr-button" class="save-qr-button">Save QR Image</button>
       <p class="instruction-text">※You can download your works' image by clicking "Save Image".</p>
       <p class="share-title">Share your works</p>
       <div class="share-actions" aria-label="Share actions">
         <button class="share-button" data-share="copy" aria-label="Copy link">
           <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z" />
+            <path
+              d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z" />
           </svg>
           <span class="share-label">Copy URL</span>
         </button>

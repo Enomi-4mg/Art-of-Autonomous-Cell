@@ -4,12 +4,12 @@ let GRID_COLUMNS = 12;
 let GRID_ROWS = 12;
 // Simulation update timing
 const UPDATE_STEP_MS = 200;
-const UPDATE_START_OFFSET_MS = 800;
+const UPDATE_START_OFFSET_MS = 300;
 // Dynamic interval scaling: base milliseconds × max cells / current empty cells
-const UPDATE_INTERVAL_CONSTANT = 200 * 144; // Base × typical grid size
+const UPDATE_INTERVAL_CONSTANT = 200 * GRID_COLUMNS * GRID_ROWS; // Base × typical grid size
 // Semantic indices
 const EMPTY_COLOR_INDEX = 0;
-const MUTATION_RATE = 0.33; // 33% mutation chance
+const MUTATION_RATE = 0.25; // 25% mutation chance
 // Global variables
 let grid;
 // Color palette: index 0 is treated as "empty"
@@ -69,7 +69,7 @@ function draw() {
   // Calculate dynamic interval based on empty cell count
   // Inverse relationship: fewer empty cells = longer interval (slower growth)
   const emptyCount = grid.emptyIndices.length;
-  const minEmptyThreshold = 1;
+  const minEmptyThreshold = 22;
   const dynamicInterval = emptyCount > minEmptyThreshold
     ? UPDATE_INTERVAL_CONSTANT / emptyCount
     : UPDATE_INTERVAL_CONSTANT / minEmptyThreshold;

@@ -203,6 +203,7 @@ class Grid {
 
         let binary = "";
         bytes.forEach(b => binary += String.fromCharCode(b));
+        console.log("Serialized length:", binary.length);
         return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
@@ -247,6 +248,7 @@ class Grid {
 
             // デシリアライズ後に空セルリストを再構築して整合性を保つ
             this.initializeEmptyList();
+            console.log("Deserialize length:", decoded.length);
         } catch (e) {
             console.error("3bit復元失敗:", e);
         }

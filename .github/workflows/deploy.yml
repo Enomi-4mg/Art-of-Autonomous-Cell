@@ -1,27 +1,27 @@
 name: Deploy to itch.io
-
 on:
-    push:
-        tags:
-            - "v*"
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Install Butler
-              run: |
-                  curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
-                  unzip butler.zip
-                  chmod +x butler
-                  ./butler -V
+      - name: Install Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          ./butler -V
 
-            - name: Push to itch.io
-              env:
-                  BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-              run: |
-                  ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:windows-64 --userversion ${{ github.ref_name }}
-                  ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:web --userversion ${{ github.ref_name }}
+      - name: Push to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:windows-64 --userversion ${{ github.ref_name }}
+          ./butler push . ${{ vars.ITCH_USERNAME }}/${{ vars.ITCH_GAMESNAME }}:web --userversion ${{ github.ref_name }}

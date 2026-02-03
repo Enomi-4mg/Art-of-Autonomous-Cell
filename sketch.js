@@ -4,7 +4,7 @@ let GRID_COLUMNS = 12;
 let GRID_ROWS = 12;
 // Simulation update timing
 const UPDATE_STEP_MS = 200;
-const UPDATE_START_OFFSET_MS = 300;
+const UPDATE_START_OFFSET_MS = 200;
 // Dynamic interval scaling: base milliseconds × max cells / current empty cells
 const UPDATE_INTERVAL_CONSTANT = 200 * GRID_COLUMNS * GRID_ROWS; // Base × typical grid size
 // Semantic indices
@@ -73,10 +73,11 @@ function draw() {
   const dynamicInterval = emptyCount > minEmptyThreshold
     ? UPDATE_INTERVAL_CONSTANT / emptyCount
     : UPDATE_INTERVAL_CONSTANT / minEmptyThreshold;
-
   // Run fixed-step updates to keep time consistent
   while (millis() - updateTimestamp > dynamicInterval) {
     updateTimestamp += dynamicInterval;
+    console.log(`Timestamp: ${(millis() / 1000).toFixed(2)} s, updateTimestamp: ${(updateTimestamp).toFixed(2)} ms`);
+    console.log(`Dynamic Interval: ${dynamicInterval.toFixed(2)} ms, Empty Cells: ${emptyCount}`);
     grid.update();
   }
 }

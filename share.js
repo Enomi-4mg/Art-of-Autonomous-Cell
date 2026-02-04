@@ -1,12 +1,40 @@
+// Platform detection utilities
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+function isAndroid() {
+    return /Android/.test(navigator.userAgent);
+}
+
+function hasFileShareSupport() {
+    // Web Share API files support check
+    if (!navigator.canShare) return false;
+    if (isIOS()) return false; // iOS Safari doesn't support files
+    if (/Firefox/.test(navigator.userAgent)) return false; // Firefox doesn't have Web Share API
+    return true;
+}
+
 // Share and export functionality
 async function handleShareAction(type) {
     const shareUrl = updateShareUrl();
     const includeXId = type === 'x';
     const shareText = buildShareText(includeXId);
     const shareTitle = EXPORT_TITLE;
-    const shareFile = await createShareImageFile(shareUrl);
-    const shareData = { title: shareTitle, text: shareText, url: shareUrl };
 
+    // COPY URL: faster path without image file (especially important for iOS)
+    if (type === 'copy') {
+        await copyToClipboard(`${shareText}\n${shareUrl}`);
+        return;
+    }
+
+    // For share buttons (X, LINE, or native Share), try with image file if supported
+    let shareFile = null;
+    if (hasFileShareSupport()) {
+        shareFile = await createShareImageFile(shareUrl);
+    }
+
+    const shareData = { title: shareTitle, text: shareText, url: shareUrl };
     if (shareFile) {
         shareData.files = [shareFile];
         if (navigator.canShare && !navigator.canShare({ files: shareData.files })) {
@@ -14,16 +42,19 @@ async function handleShareAction(type) {
         }
     }
 
-    const shouldTryNativeShare = type !== 'copy' || !!shareData.files;
-    if (shouldTryNativeShare) {
+    // Try native share on iOS if Web Share API is available
+    if (isIOS() && navigator.share) {
         const shared = await tryNativeShare(shareData);
         if (shared) return;
     }
 
-    if (type === 'copy') {
-        await copyToClipboard(`${shareText}\n${shareUrl}`);
-        return;
+    // For Android, try native share with file support
+    if (isAndroid() && navigator.share) {
+        const shared = await tryNativeShare(shareData);
+        if (shared) return;
     }
+
+    // Fallback to web intents for desktop or unsupported platforms
     if (type === 'x') {
         const intentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
         openShareWindow(intentUrl);
@@ -85,71 +116,102 @@ async function copyToClipboard(text) {
     document.body.removeChild(temp);
 }
 
-async function createShareImageFile(shareUrl) {
-    try {
-        const blob = await createShareImageBlob(shareUrl);
-        if (!blob) return null;
-        return new File([blob], 'autonomous-pixels.png', { type: 'image/png' });
-    } catch (_err) {
-        return null;
-    }
+/**
+ * Download image using HTML5 Download API
+ * Fallback for iOS and browsers without Web Share API file support
+ */
+function downloadImage(blob, filename = 'autonomous-pixels.png') {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
-function createShareImageBlob(shareUrl) {
-    return new Promise((resolve) => {
-        const exportCanvas = createGraphics(EXPORT_CANVAS_WIDTH, EXPORT_CANVAS_HEIGHT);
-        exportCanvas.background(246, 247, 251);
-
-        const frameSize = CANVAS_SIZE + EXPORT_FRAME_PADDING * 2;
-        exportCanvas.stroke(31, 41, 55);
-        exportCanvas.strokeWeight(2);
-        exportCanvas.noFill();
-        exportCanvas.rect(EXPORT_MARGIN - EXPORT_FRAME_PADDING, EXPORT_MARGIN - EXPORT_FRAME_PADDING, frameSize, frameSize);
-
-        drawGridToGraphics(exportCanvas, EXPORT_MARGIN, EXPORT_MARGIN, CANVAS_SIZE);
-
-        const finalizeExport = () => {
-            exportCanvas.fill(31, 41, 55);
-            exportCanvas.textFont("Inter, Helvetica Neue, Segoe UI, sans-serif");
-            exportCanvas.textAlign(CENTER);
-            exportCanvas.textSize(18);
-            exportCanvas.textStyle(NORMAL);
-            exportCanvas.text(EXPORT_TITLE, EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 80);
-            exportCanvas.textSize(12);
-            exportCanvas.text(SHARE_AUTHOR_LINE, EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 60);
-
-            exportCanvas.canvas.toBlob((blob) => {
-                resolve(blob || null);
-            }, 'image/png');
-        };
-
-        if (qrcode && typeof qrcode.makeCode === 'function') {
-            qrcode.makeCode(shareUrl);
-        }
-
-        setTimeout(() => {
-            const qrImgElement = document.querySelector('#qrcode img');
-            if (qrImgElement && qrImgElement.src) {
-                loadImage(qrImgElement.src, (readyImg) => {
-                    exportCanvas.image(
-                        readyImg,
-                        EXPORT_CANVAS_WIDTH - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING,
-                        EXPORT_CANVAS_HEIGHT - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING,
-                        EXPORT_QR_SIZE,
-                        EXPORT_QR_SIZE
-                    );
-                    finalizeExport();
-                }, () => {
-                    finalizeExport();
-                });
-            } else {
-                finalizeExport();
-            }
-        }, 200);
-    });
+/**
+ * Display image in fullscreen modal for iOS long-press save
+ * This allows iOS users to tap and hold the image to save to Photos
+ */
+function displayImageForSaving(blob, filename = 'autonomous-pixels.png') {
+    // Create data URL from blob
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        
+        // Create modal container
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        `;
+        
+        // Create image
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.style.cssText = `
+            max-width: 100%;
+            max-height: 80%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        `;
+        
+        // Create instruction text
+        const instruction = document.createElement('p');
+        instruction.textContent = 'Tap and hold to save to Photos';
+        instruction.style.cssText = `
+            color: #ffffff;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+        `;
+        
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.style.cssText = `
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        `;
+        closeBtn.onclick = () => document.body.removeChild(modal);
+        
+        modal.appendChild(img);
+        modal.appendChild(instruction);
+        modal.appendChild(closeBtn);
+        document.body.appendChild(modal);
+    };
+    reader.readAsDataURL(blob);
 }
 
-async function exportImage() {
+/**
+ * 統合画像生成関数：描画ロジックを一元化
+ * @param {Object} options - 設定オプション
+ * @param {string} options.outputFormat - 出力形式: 'download' | 'blob'
+ * @param {string} [options.shareUrl] - シェアURL（QR生成用、'blob'時に使用）
+ * @returns {Promise<Blob|void>}
+ */
+async function generateExportImage(options = {}) {
+    const { outputFormat = 'download', shareUrl = null } = options;
+
+    // キャンバス作成と基本描画
     const exportCanvas = createGraphics(EXPORT_CANVAS_WIDTH, EXPORT_CANVAS_HEIGHT);
     exportCanvas.background(246, 247, 251);
 
@@ -163,11 +225,32 @@ async function exportImage() {
     // グリッド描画
     drawGridToGraphics(exportCanvas, EXPORT_MARGIN, EXPORT_MARGIN, CANVAS_SIZE);
 
-    // QRコードの取得を待機
-    const qrImg = await getQRCodeImage();
-    if (qrImg) {
+    // QR画像取得
+    let qrImage = null;
+    if (outputFormat === 'download') {
+        // downloadモード：await getQRCodeImage()で非同期対応
+        qrImage = await getQRCodeImage();
+    } else if (outputFormat === 'blob' && shareUrl) {
+        // blobモード：setTimeout でDOM要素ポーリング
+        qrImage = await new Promise((resolve) => {
+            if (qrcode && typeof qrcode.makeCode === 'function') {
+                qrcode.makeCode(shareUrl);
+            }
+            setTimeout(() => {
+                const qrImgElement = document.querySelector('#qrcode img');
+                if (qrImgElement && qrImgElement.src) {
+                    loadImage(qrImgElement.src, (img) => resolve(img), () => resolve(null));
+                } else {
+                    resolve(null);
+                }
+            }, 200);
+        });
+    }
+
+    // QR画像描画
+    if (qrImage) {
         exportCanvas.image(
-            qrImg,
+            qrImage,
             EXPORT_CANVAS_WIDTH - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING,
             EXPORT_CANVAS_HEIGHT - EXPORT_QR_SIZE - EXPORT_FRAME_PADDING,
             EXPORT_QR_SIZE,
@@ -175,20 +258,50 @@ async function exportImage() {
         );
     }
 
-    // テキスト描画
-    exportCanvas.fill(31, 41, 55);
+    // テキスト描画（共通）
     exportCanvas.textFont("Inter, Helvetica Neue, Segoe UI, sans-serif");
+    exportCanvas.fill(31, 41, 55);
     exportCanvas.textAlign(CENTER);
     exportCanvas.textSize(18);
+    exportCanvas.textStyle(NORMAL);
     exportCanvas.text(EXPORT_TITLE, EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 80);
     exportCanvas.textSize(12);
-    exportCanvas.text("Created by @Enomi-4mg", EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 60);
-    // バージョン表記の描画
+    exportCanvas.text(SHARE_AUTHOR_LINE, EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 60);
+
+    // バージョン表記を左下に統一描画
     exportCanvas.textSize(15);
-    exportCanvas.fill(31, 41, 55, 150); 
+    exportCanvas.fill(31, 41, 55, 150);
     exportCanvas.textAlign(LEFT);
     exportCanvas.text(APP_VERSION, 15, EXPORT_CANVAS_HEIGHT - 15);
-    saveCanvas(exportCanvas, 'autonomous-pixels', 'png');
+
+    // 出力形式に応じて処理
+    if (outputFormat === 'download') {
+        saveCanvas(exportCanvas, 'autonomous-pixels', 'png');
+        return;
+    } else if (outputFormat === 'blob') {
+        return new Promise((resolve) => {
+            exportCanvas.canvas.toBlob((blob) => resolve(blob || null), 'image/png');
+        });
+    }
+}
+
+async function createShareImageFile(shareUrl) {
+    try {
+        const blob = await createShareImageBlob(shareUrl);
+        if (!blob) return null;
+        return new File([blob], 'autonomous-pixels.png', { type: 'image/png' });
+    } catch (_err) {
+        return null;
+    }
+}
+
+function createShareImageBlob(shareUrl) {
+    // 統合関数を呼び出し
+    return generateExportImage({ outputFormat: 'blob', shareUrl });
+}
+
+async function exportImage() {
+    await generateExportImage({ outputFormat: 'download' });
 }
 
 function drawGridToGraphics(gfx, offsetX, offsetY, size) {

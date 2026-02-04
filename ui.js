@@ -61,7 +61,7 @@ function setupSaveButton() {
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.Q
     });
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         if (GRID_COLUMNS > 16) {
             alert("Warning: High density grid may be hard to scan via QR.");
         }
@@ -72,11 +72,23 @@ function setupSaveButton() {
         // Generate the QR code
         qrcode.makeCode(fullUrl);
         // Wait briefly to ensure the library finishes rendering
-        setTimeout(() => {
-            exportImage();
+        setTimeout(async () => {
+            // For iOS Safari, use display modal instead of download
+            if (isIOS()) {
+                const blob = await createShareImageBlob(fullUrl);
+                if (blob) {
+                    displayImageForSaving(blob);
+                } else {
+                    alert("Failed to generate image. Please try again.");
+                }
+            } else {
+                // For desktop and Android, use normal export
+                await exportImage();
+            }
         }, 300);
     });
 }
+
 
 function setupQRButton() {
     const qrBtn = document.getElementById('save-qr-button');
@@ -130,7 +142,25 @@ function setupQRButton() {
                     qrCanvas.fill(100, 116, 139);
                     qrCanvas.text("Scan to view this pattern", EXPORT_QR_ONLY_SIZE / 2, qrY + qrSize + 100);
 
-                    saveCanvas(qrCanvas, 'autonomous-pixels-qr', 'png');
+                    // Add version at bottom-left
+                    qrCanvas.textSize(15);
+                    qrCanvas.fill(31, 41, 55, 150);
+                    qrCanvas.textAlign(LEFT);
+                    qrCanvas.text(APP_VERSION, 15, EXPORT_QR_ONLY_SIZE - 15);
+
+                    // For iOS Safari, use display modal instead of download
+                    if (isIOS()) {
+                        qrCanvas.canvas.toBlob((blob) => {
+                            if (blob) {
+                                displayImageForSaving(blob, 'autonomous-pixels-qr.png');
+                            } else {
+                                alert("Failed to generate QR image. Please try again.");
+                            }
+                        }, 'image/png');
+                    } else {
+                        // For desktop and Android, use normal export
+                        saveCanvas(qrCanvas, 'autonomous-pixels-qr', 'png');
+                    }
                 });
             }
         }, 300);

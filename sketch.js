@@ -34,6 +34,7 @@ const SHARE_AUTHOR_LINE = "Created by Enomi-4mg";
 const SHARE_X_ID = "@4mgEnomi";
 
 function setup() {
+  document.addEventListener('touchstart', {}, {passive: true});
   const container = document.getElementById('canvas-container');
   const initialSize = container.offsetWidth > 0 ? container.offsetWidth : CANVAS_SIZE;
   const cnv = createCanvas(initialSize, initialSize);

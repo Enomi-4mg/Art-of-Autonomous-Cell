@@ -1,3 +1,4 @@
+const APP_VERSION = "v1.1.10";
 // Canvas and grid configuration
 const CANVAS_SIZE = 400;
 let GRID_COLUMNS = 12;
@@ -34,7 +35,10 @@ const SHARE_AUTHOR_LINE = "Created by Enomi-4mg";
 const SHARE_X_ID = "@4mgEnomi";
 
 function setup() {
+  // Enable passive touch listeners for better performance
   document.addEventListener('touchstart', {}, {passive: true});
+  document.getElementById('version-display').textContent = APP_VERSION;
+  // Create canvas and initialize grid
   const container = document.getElementById('canvas-container');
   const initialSize = container.offsetWidth > 0 ? container.offsetWidth : CANVAS_SIZE;
   const cnv = createCanvas(initialSize, initialSize);

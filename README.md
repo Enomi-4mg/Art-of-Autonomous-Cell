@@ -1,4 +1,4 @@
-# Art of Autonomous Pixels v.1.1.7
+# Art of Autonomous Pixels v.1.1.10
 
 An interactive generative art project where pixels grow and evolve autonomously to create unique patterns. Built with p5.js.
 

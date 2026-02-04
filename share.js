@@ -183,7 +183,11 @@ async function exportImage() {
     exportCanvas.text(EXPORT_TITLE, EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 80);
     exportCanvas.textSize(12);
     exportCanvas.text("Created by @Enomi-4mg", EXPORT_CANVAS_WIDTH / 2, EXPORT_CANVAS_HEIGHT - 60);
-
+    // バージョン表記の描画
+    exportCanvas.textSize(15);
+    exportCanvas.fill(31, 41, 55, 150); 
+    exportCanvas.textAlign(LEFT);
+    exportCanvas.text(APP_VERSION, 15, EXPORT_CANVAS_HEIGHT - 15);
     saveCanvas(exportCanvas, 'autonomous-pixels', 'png');
 }
 
@@ -194,8 +198,9 @@ function drawGridToGraphics(gfx, offsetX, offsetY, size) {
         for (let j = 0; j < grid.Y; j++) {
             const cIdx = grid.cells[i + j * grid.X].ColorIndex;
             gfx.fill(colorPalette[cIdx]);
-            gfx.noStroke();
-            gfx.rect(offsetX + i * cellSize, offsetY + j * cellSize, cellSize, cellSize);
+            gfx.stroke(230);
+            gfx.strokeWeight(0.5);
+            gfx.rect(offsetX + i * cellSize, offsetY + j * cellSize, cellSize + 0.5, cellSize + 0.5);
         }
     }
 }

@@ -389,6 +389,12 @@ canvas {
   text-decoration: underline;
 }
 
+.version-tag {
+  margin-left: 10px;
+  opacity: 0.6;
+  font-family: monospace;
+}
+
 @media (max-width: 900px) {
   body {
     padding: 18px;

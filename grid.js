@@ -147,7 +147,7 @@ class Grid {
     update() {
         // Rescue from extinction: seed the center if all are empty
         if (this.emptyIndices.length === this.cells.length) {
-            const centerIdx = floor(this.cells.length / 2);
+            const centerIdx = floor(random(this.cells.length));
             const seedColor = floor(random(1, colorPalette.length));
             this.fillCell(centerIdx, seedColor);
             return;

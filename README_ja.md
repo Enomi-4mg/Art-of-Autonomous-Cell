@@ -1,4 +1,4 @@
-# Art of Autonomous Pixels
+# Art of Autonomous Pixels v1.1.7
 
 ピクセルが自律的に成長・進化して独自のパターンを作り出す、インタラクティブなジェネラティブアートプロジェクトです。p5.jsで構築されています。
 

@@ -116,14 +116,6 @@ class Grid {
     }
 
     getIndexAt(screenX, screenY) {
-        // キャンバスの実際の表示サイズを取得
-        const canvasElement = document.querySelector('#canvas-container canvas');
-        const rect = canvasElement.getBoundingClientRect();
-
-        // 表示サイズに対する相対座標を計算
-        const relativeX = screenX - 0; // すでに相対座標なら 0
-        const relativeY = screenY - 0;
-        // Convert screen position to cell index (or null if outside)
         if (screenX < 0 || screenX >= width || screenY < 0 || screenY >= height) {
             return null;
         }

@@ -52,6 +52,10 @@ canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;
+  touch-action: none; 
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
 .layout {

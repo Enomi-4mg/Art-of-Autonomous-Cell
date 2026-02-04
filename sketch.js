@@ -9,7 +9,7 @@ const UPDATE_START_OFFSET_MS = 200;
 const UPDATE_INTERVAL_CONSTANT = 200 * GRID_COLUMNS * GRID_ROWS; // Base × typical grid size
 // Semantic indices
 const EMPTY_COLOR_INDEX = 0;
-const MUTATION_RATE = 0.25; // 25% mutation chance
+const MUTATION_RATE = 0.2; // 20% mutation chance
 // Global variables
 let grid;
 // Color palette: index 0 is treated as "empty"
@@ -89,12 +89,9 @@ function mousePressed() {
   }
 }
 function touchStarted() {
-  const touchX = touches[0].x;
-  const touchY = touches[0].y;
-  if (touchX >= 0 && touchX <= width && touchY >= 0 && touchY <= height) {
-    // console.log("Touch started inside canvas at " + touchX + ", " + touchY);
-    handleInput(touchX, touchY);
-    return false;
+  if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+    handleInput(mouseX, mouseY);
+    return false; 
   }
 }
 function handleInput(x, y) {
